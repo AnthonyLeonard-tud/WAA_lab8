@@ -1,9 +1,13 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const MongoClient = require('mongodb').MongoClient;
 
 const app = express();
 const port = 3000;
+const url = 'mongodb://localhost:27017';
+
+const dbName = 'Articles';
 
 app.use(cors());
 
@@ -13,17 +17,26 @@ app.use(bodyParser.json());
 
 // articles routes
 app.get('/articles', (req, res) => {
-    res.json(Articles);
+    MongoClient.connect(url, function(err, client) {
+        const db = client.db(dbName);
+        const collection = db.collection('article');
+        collection.find({}).toArray(function(err, docs) {
+            res.json(docs);
+        });
+        client.close();
+    });
 });
 
 app.post('/articles', (req, res) => {
-    const article = req.body; // newly defuined from buffer above!
-
-    // Output the book to the console for debugging
-    // console.log(article);
-    Articles.push(article);
-
-    res.send('Article was added to the database');
+    const article = req.body;
+    MongoClient.connect(url, function(err, client) {
+        const db = client.db(dbName);
+        const collection = db.collection('article');
+        collection.insertOne(article, function(err, result) {
+            res.send('Article was added to the database');
+        });
+        client.close();
+    });
 });
 
 
